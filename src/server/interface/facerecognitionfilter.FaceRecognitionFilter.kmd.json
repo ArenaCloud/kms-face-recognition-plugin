@@ -5,16 +5,109 @@
       "extends": "OpenCVFilter",
       "doc": "FaceRecognitionFilter interface. Documentation about the module",
       "constructor": {
-	"doc": "Create an element",
-	"params": [
-	  {
-	    "name": "mediaPipeline",
-	    "doc": "the parent :rom:cls:`MediaPipeline`",
-	    "type": "MediaPipeline",
-	    "final": true
-	  }
-	]
-      }
+        "doc": "Create the FaceRecognitionFilter object",
+        "params": [
+          {
+            "name": "mediaPipeline",
+            "doc": "the parent :rom:cls:`MediaPipeline`",
+            "type": "MediaPipeline",
+            "final": true
+          }
+        ]
+      },
+      "methods": [
+        {
+          "name": "loadModel",
+          "doc": "Loads existing trained models",
+          "params": [
+            {
+              "name" : "faceTrainingParam",
+              "doc": "Parameters for FaceTraining object",
+              "type" : "FaceTrainingModelParam"
+            }
+          ]
+        },
+        {
+          "name": "start",
+          "doc": "Starts detecting faces",
+          "params": []
+        },
+        {
+          "name": "stop",
+          "doc": "Stops detecting faces",
+          "params" : []
+        }
+      ],
+      "events": [
+        "FaceDetected"
+      ]
+    }
+  ],
+  "complexTypes": [
+    {
+      "typeFormat": "REGISTER",
+      "properties": [
+        {
+          "name": "dirPath",
+          "doc" : "path to model directory",
+          "type" : "String"
+        },
+        {
+          "name": "facedetectionCascade",
+          "doc": "path to facedetection cascade xml",
+          "type": "String"
+        },
+        {
+          "name": "targetWidth",
+          "doc": "resized width of the face",
+          "type" : "int"
+        },
+        {
+          "name": "targetHeight",
+          "doc": "resized height of the face",
+          "type" : "int"
+        },
+        {
+          "name": "minimumWidthFace",
+          "doc": "minimum width of the face for detection",
+          "type" : "int"
+        },
+        {
+          "name": "minimumHeightFace",
+          "doc": "minimum height of the face for detection",
+          "type" : "int"
+        }
+      ],
+      "name" : "FaceTrainingModelParam"
+    }
+  ],
+  "events" : [
+    {
+      "properties": [
+        {
+          "name": "label",
+          "doc": "Label of the face detected",
+          "type": "String"
+        },
+        {
+          "name": "confidence",
+          "doc": "Confidence of the face detected",
+          "type": "double"
+        },
+        {
+          "name": "algorithm",
+          "doc": "Algorithm which detected the face",
+          "type": "String"
+        },
+        {
+          "name": "timestamp",
+          "doc": "Time at which face is detected",
+          "type": "int"
+        }
+      ],
+      "name" : "FaceDetected",
+      "extends" : "Media",
+      "doc" : "Information about FaceDetected"
     }
   ]
 }
