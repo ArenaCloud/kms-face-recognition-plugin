@@ -100,7 +100,7 @@
           "type": "String"
         },
         {
-          "name": "timestamp",
+          "name": "frameTimestamp",
           "doc": "Time at which face is detected",
           "type": "int"
         }
