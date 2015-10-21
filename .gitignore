@@ -1,2 +1,4 @@
 build/
 debian/face_recognition_filter
+.idea
+obj-x86_64-linux-gnu
