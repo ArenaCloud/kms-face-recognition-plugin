@@ -76,6 +76,11 @@
           "name": "minimumHeightFace",
           "doc": "minimum height of the face for detection",
           "type" : "int"
+        },
+        {
+          "name": "confidenceThreshold",
+          "doc": "threshold for the confidence, if confidence < confidenceThreshold, then true",
+          "type": "double"
         }
       ],
       "name" : "FaceTrainingModelParam"

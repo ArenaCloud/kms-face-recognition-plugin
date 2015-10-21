@@ -17,24 +17,28 @@ FaceRecognitionFilterOpenCVImpl::FaceRecognitionFilterOpenCVImpl ()
 
 void FaceRecognitionFilterOpenCVImpl::process (cv::Mat &mat)
 {
+  // TODO make changing model dynamic
   if (this->running) {
     int label = -1;
     double prediction = -1.0;
     std::time_t frameTime = std::time(nullptr);
     this->p_face_training->get_face_recognition().predict(
-            FISHERFACES, mat,
+            LBPH, mat,
             label, prediction,
             this->targetWidth, this->targetHeight,
             this->minimumWidthFace, this->minimumHeightFace);
 
-    if (prediction >= 0.0) {
+    if (prediction >= 0.0 && prediction < this->confidenceThreshold) {
       std::string labelString;
       std::ostringstream convert;
       convert << label;
       labelString = convert.str();
 
-      FaceDetected detected(getSharedPtr(), FaceDetected::getName(), labelString, prediction, "fisherfaces", (int) frameTime);
+      FaceDetected detected(getSharedPtr(), FaceDetected::getName(), labelString, prediction, "lbph", (int) frameTime);
       signalFaceDetected(detected);
+
+      // stop detecting once recognized
+      this->running = false;
     }
   }
 }
@@ -49,6 +53,7 @@ void FaceRecognitionFilterOpenCVImpl::loadModel (std::shared_ptr<FaceTrainingMod
   this->targetHeight = faceTrainingParam->getTargetHeight();
   this->minimumWidthFace = faceTrainingParam->getMinimumWidthFace();
   this->minimumHeightFace = faceTrainingParam->getMinimumHeightFace();
+  this->confidenceThreshold = faceTrainingParam->getConfidenceThreshold();
 }
 
 void FaceRecognitionFilterOpenCVImpl::start ()

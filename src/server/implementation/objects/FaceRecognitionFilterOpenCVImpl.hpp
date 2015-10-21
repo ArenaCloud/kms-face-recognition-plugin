@@ -43,6 +43,7 @@ private:
     int minimumWidthFace;
     int minimumHeightFace;
     volatile bool running;
+    double confidenceThreshold;
 };
 
 } /* facerecognitionfilter */
