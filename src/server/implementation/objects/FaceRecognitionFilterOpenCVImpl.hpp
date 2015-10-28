@@ -24,7 +24,6 @@ class FaceRecognitionFilterOpenCVImpl : public virtual OpenCVProcess
 {
 
 public:
-
   FaceRecognitionFilterOpenCVImpl ();
 
   virtual ~FaceRecognitionFilterOpenCVImpl () {};
@@ -32,18 +31,27 @@ public:
   virtual void process (cv::Mat &mat);
 
   void loadModel (std::shared_ptr<FaceTrainingModelParam> faceTrainingParam);
+  void setConfidenceThresholds (const std::vector<std::shared_ptr<AlgorithmConfidencePair>> &confidenceThresholds);
   void start ();
   void stop ();
   sigc::signal<void, FaceDetected> signalFaceDetected;
 
 private:
+
     unique_ptr<FaceTraining> p_face_training;
     int targetWidth;
     int targetHeight;
     int minimumWidthFace;
     int minimumHeightFace;
     volatile bool running;
-    double confidenceThreshold;
+    map<OpenCVFaceRecognizer, double> confidenceThresholdsMap;
+    vector<shared_ptr<AlgorithmPredictionResult>> results;
+    vector<OpenCVFaceRecognizer> activeAlgorithms;
+    vector<int> labels;
+    vector<double> confidences;
+
+    void initializeLabelsAndConfidences(vector<int>& labels, vector<double> &confidences, size_t size);
+
 };
 
 } /* facerecognitionfilter */

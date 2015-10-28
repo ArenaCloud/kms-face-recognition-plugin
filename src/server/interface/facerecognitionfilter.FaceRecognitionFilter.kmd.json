@@ -36,6 +36,17 @@
           "name": "stop",
           "doc": "Stops detecting faces",
           "params" : []
+        },
+        {
+          "name": "setConfidenceThresholds",
+          "doc": "Sets the confidence thresholds per algorithm, this implicitly also states which algorithms to run",
+          "params" : [
+            {
+              "name": "confidenceThresholds",
+              "doc": "threshold for the confidence, if confidence < confidenceThreshold, then true",
+              "type": "AlgorithmConfidencePair[]"
+            }
+          ]
         }
       ],
       "events": [
@@ -76,33 +87,50 @@
           "name": "minimumHeightFace",
           "doc": "minimum height of the face for detection",
           "type" : "int"
-        },
-        {
-          "name": "confidenceThreshold",
-          "doc": "threshold for the confidence, if confidence < confidenceThreshold, then true",
-          "type": "double"
         }
       ],
       "name" : "FaceTrainingModelParam"
-    }
-  ],
-  "events" : [
+    },
     {
-      "properties": [
+      "name" : "AlgorithmConfidencePair",
+      "typeFormat" : "REGISTER",
+      "properties" : [
+        {
+          "name": "algorithm",
+          "doc" : "Algorithm for face recognition",
+          "type" : "String"
+        },
+        {
+          "name": "confidence",
+          "doc" : "confidence value",
+          "type" : "double"
+        }
+      ]
+    },
+    {
+      "name" : "AlgorithmPredictionResult",
+      "typeFormat": "REGISTER",
+      "properties" : [
         {
           "name": "label",
           "doc": "Label of the face detected",
           "type": "String"
         },
         {
-          "name": "confidence",
-          "doc": "Confidence of the face detected",
-          "type": "double"
-        },
+          "name": "algorithmConfidencePair",
+          "doc" : "algorithm name and confidence value",
+          "type": "AlgorithmConfidencePair"
+        }
+      ]
+    }
+  ],
+  "events" : [
+    {
+      "properties": [
         {
-          "name": "algorithm",
-          "doc": "Algorithm which detected the face",
-          "type": "String"
+          "name": "result",
+          "doc": "array of algorithm prediction results",
+          "type": "AlgorithmPredictionResult[]"
         },
         {
           "name": "frameTimestamp",

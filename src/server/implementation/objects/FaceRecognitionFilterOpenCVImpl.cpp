@@ -2,6 +2,9 @@
 
 #include "FaceRecognitionFilterOpenCVImpl.hpp"
 #include <ctime>
+#include <KurentoException.hpp>
+#include "AlgorithmConfidencePair.hpp"
+#include "AlgorithmPredictionResult.hpp"
 
 namespace kurento
 {
@@ -17,28 +20,43 @@ FaceRecognitionFilterOpenCVImpl::FaceRecognitionFilterOpenCVImpl ()
 
 void FaceRecognitionFilterOpenCVImpl::process (cv::Mat &mat)
 {
-  // TODO make changing model dynamic
-  if (this->running) {
-    int label = -1;
-    double prediction = -1.0;
+  if (this->running && this->activeAlgorithms.size() > 0) {
     std::time_t frameTime = std::time(nullptr);
+    int satisfiedThreshold = 0;
+
+    // empty previous results
+    results.clear();
+
     this->p_face_training->get_face_recognition().predict(
-            LBPH, mat,
-            label, prediction,
+            this->activeAlgorithms, mat, this->labels, this->confidences,
             this->targetWidth, this->targetHeight,
             this->minimumWidthFace, this->minimumHeightFace);
 
-    if (prediction >= 0.0 && prediction < this->confidenceThreshold) {
+    for (size_t i = 0; i < this->activeAlgorithms.size(); i++) {
+      OpenCVFaceRecognizer recognizer = this->activeAlgorithms[i];
+      const string& algorithm = FaceRecognition::OpenCVFaceRecognizerToString.at(recognizer);
+      int label = this->labels[i];
+      double confidence = this->confidences[i];
+      double threshold = this->confidenceThresholdsMap[recognizer];
+
+      if (confidence >= 0.0 && confidence < threshold) {
+        satisfiedThreshold++;
+      }
       std::string labelString;
       std::ostringstream convert;
       convert << label;
       labelString = convert.str();
 
-      FaceDetected detected(getSharedPtr(), FaceDetected::getName(), labelString, prediction, "lbph", (int) frameTime);
-      signalFaceDetected(detected);
+      auto confidencePair = make_shared<AlgorithmConfidencePair>(AlgorithmConfidencePair(algorithm, confidence));
+      auto predictionResult = make_shared<AlgorithmPredictionResult>(AlgorithmPredictionResult(labelString, confidencePair));
+      results.push_back(predictionResult);
+    }
 
+    if (satisfiedThreshold > 0) {
+      FaceDetected detected(getSharedPtr(), FaceDetected::getName(), results, (int) frameTime);
       // stop detecting once recognized
       this->running = false;
+      signalFaceDetected(detected);
     }
   }
 }
@@ -46,14 +64,15 @@ void FaceRecognitionFilterOpenCVImpl::process (cv::Mat &mat)
 void FaceRecognitionFilterOpenCVImpl::loadModel (std::shared_ptr<FaceTrainingModelParam> faceTrainingParam)
 {
   this->p_face_training.reset(new FaceTraining(faceTrainingParam->getDirPath()));
-  this->p_face_training->get_face_recognition().load_cascade(faceTrainingParam->getFacedetectionCascade());
+  if (!this->p_face_training->get_face_recognition().load_cascade(faceTrainingParam->getFacedetectionCascade())) {
+    throw new KurentoException(UNEXPECTED_ERROR, "Could not load cascade");
+  }
   this->p_face_training->load();
 
   this->targetWidth = faceTrainingParam->getTargetWidth();
   this->targetHeight = faceTrainingParam->getTargetHeight();
   this->minimumWidthFace = faceTrainingParam->getMinimumWidthFace();
   this->minimumHeightFace = faceTrainingParam->getMinimumHeightFace();
-  this->confidenceThreshold = faceTrainingParam->getConfidenceThreshold();
 }
 
 void FaceRecognitionFilterOpenCVImpl::start ()
@@ -64,6 +83,30 @@ void FaceRecognitionFilterOpenCVImpl::start ()
 void FaceRecognitionFilterOpenCVImpl::stop ()
 {
   this->running = false;
+}
+
+void FaceRecognitionFilterOpenCVImpl::setConfidenceThresholds(
+        const std::vector<std::shared_ptr<AlgorithmConfidencePair>> &confidenceThresholds) {
+
+  this->confidenceThresholdsMap.clear();
+  this->activeAlgorithms.clear();
+
+  for (auto &confidenceThreshold : confidenceThresholds) {
+    OpenCVFaceRecognizer algorithm = FaceRecognition::OpenCVFaceRecognizerStringToEnum.at(confidenceThreshold->getAlgorithm());
+    this->confidenceThresholdsMap[algorithm] = confidenceThreshold->getConfidence();
+    this->activeAlgorithms.push_back(algorithm);
+  }
+  initializeLabelsAndConfidences(this->labels, this->confidences, this->activeAlgorithms.size());
+}
+
+void FaceRecognitionFilterOpenCVImpl::initializeLabelsAndConfidences(vector<int> &labels,
+                                                                     vector<double> &confidences, size_t size) {
+  labels.clear();
+  confidences.clear();
+  for (size_t i = 0; i < size; i++) {
+    labels.push_back(-1);
+    confidences.push_back(-1.0);
+  }
 }
 
 } /* facerecognitionfilter */
